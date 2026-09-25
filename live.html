@@ -534,7 +534,7 @@ function render(t){
  const sh=imp*18,dx=noise(t*45)*sh,dy=noise(t*45+99)*sh,z=1+imp*.025;
  ctx.save();ctx.fillStyle='#000';ctx.fillRect(0,0,W,H);ctx.translate(CX+dx,CY+dy);ctx.scale(z,z);ctx.drawImage(src,-CX,-CY);ctx.restore();
  ctx.drawImage(vig,0,0);
- ctx.save();ctx.globalCompositeOperation='overlay';ctx.globalAlpha=.07;ctx.drawImage(grain[Math.floor(t*60)%grain.length],0,0,W,H);ctx.restore();
+ ctx.save();ctx.globalCompositeOperation='overlay';ctx.globalAlpha=.07;ctx.drawImage(grain[Math.abs(Math.floor(t*60))%grain.length],0,0,W,H);ctx.restore();
  hud(ctx,t);
 }
 
@@ -546,10 +546,13 @@ window.ready=(async()=>{
 window.renderAt=t=>render(t);
 if(!location.search.includes('render')){
  window.ready.then(()=>{
-  const audio=new Audio('reel.wav');let t0=null;
+  const audio=new Audio('reel.wav');audio.loop=true;let t0=null;
   const go=()=>{t0=performance.now();audio.currentTime=0;audio.play().catch(()=>{})};
   cv.addEventListener('click',go);go();
-  const loop=now=>{const t=((now-t0)/1000)%DUR;render(t);requestAnimationFrame(loop)};requestAnimationFrame(loop);
+  const loop=now=>{requestAnimationFrame(loop);
+   // follow the audio clock when it is running so picture and sound stay in sync
+   const clock=!audio.paused&&audio.currentTime>0?audio.currentTime:(performance.now()-t0)/1000;
+   render(((clock%DUR)+DUR)%DUR)};requestAnimationFrame(loop);
  });
 }
 </script></body></html>
